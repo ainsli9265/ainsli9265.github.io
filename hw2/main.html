@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title> hw 2 </title>
+    </head>
+    <body>
+        <div>
+            <span>waveform: </span>
+            <select id="waveform">
+                <option value="sine" selected="selected">sine</option>
+                <option value="sawtooth">sawtooth</option>
+            </select>
+        </div>
+
+        <div>
+            <span>additive synthesis: </span>
+            <select id="additive">
+                <option value="off" selected="selected">off</option>
+                <option value="on">on</option>
+            </select>
+        </div>
+
+        <div>
+            <span>am synthesis: </span>
+            <select id="am">
+                <option value="off" selected="selected">off</option>
+                <option value="on">on</option>
+            </select>
+            <span>am frequency:</span>
+            <input type="range" id="amfreq" min="1" max="500" step="1" value="110">
+        </div>
+
+        <div>
+            <span>fm synthesis: </span>
+            <select id="fm">
+                <option value="off" selected="selected">off</option>
+                <option value="on">on</option>
+            </select>
+            <span>fm frequency:</span>
+            <input type="range" id="fmfreq" min="1" max="500" step="1" value="110">
+            <span>fm modulation index:</span>
+            <input type="range" id="fmindex" min="1" max="500" step="1" value="100">
+        </div>
+    
+        <div>
+            <span>lfo (doesn't work with additive synthesis): </span>
+            <select id="lfo">
+                <option value="off" selected="selected">off</option>
+                <option value="on">on</option>
+            </select>
+        </div>
+
+        <div>
+            <span>current note:</span>
+            <span id="notedisplay">-</span>
+        </div>
+
+        <div class="container">
+            <canvas id="globalVisualizer" width="150" height="85" style="border:1px solid #ff1bbb">
+                wave form visualizer
+            </canvas>
+        </div>
+    </body>
+    <script src="main.js"> </script>
+</html>
