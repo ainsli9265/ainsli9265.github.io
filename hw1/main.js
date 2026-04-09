@@ -1,19 +1,7 @@
 document.addEventListener("DOMContentLoaded", function(event) {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    const globalGain = audioCtx.createGain();
-    globalGain.gain.setValueAtTime(0.8, audioCtx.currentTime)
-    globalGain.connect(audioCtx.destination);
-    const adsr = {
-        attack: 0.02,
-        decay: 0.1,
-        sustain: 0.6,
-        release: 0.15
-    };
-
-    let waveform = 'sine'
-
-    const keyboardFreqMap = {
+    const keyboardFrequencyMap = {
         '90': 261.625565300598634,  //Z - C
         '83': 277.182630976872096, //S - C#
         '88': 293.664767917407560,  //X - D
@@ -40,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         '85': 987.766602512248223,  //U - B
     }
 
-    const notenamekey = {
+    const notenames = {
         '90': 'C',
         '83': 'C#',
         '88': 'D',
@@ -67,91 +55,105 @@ document.addEventListener("DOMContentLoaded", function(event) {
         '85': 'B'
     }
 
-    const letters = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const notecolors = {
+        'C':  [255, 0, 0],      // red
+        'C#': [255, 60, 0],     // red-orange
+        'D':  [255, 120, 0],    // orange
+        'D#': [255, 180, 0],    // yellow-orange
+        'E':  [255, 255, 0],    // yellow
+        'F':  [0, 200, 0],      // green
+        'F#': [0, 200, 150],    // teal
+        'G':  [0, 150, 255],    // light blue
+        'G#': [0, 0, 255],      // blue
+        'A':  [100, 0, 255],    // indigo
+        'A#': [180, 0, 255],    // violet
+        'B':  [255, 0, 180],    // pink
+    }
 
-    const notedisplay = document.getElementById('notedisplay');
-    const triaddisplay = document.getElementById('triaddisplay');
+    const adsr = {
+        attack: 0.08,
+        decay: 0.2,
+        sustain: 0.6,
+        release: 0.3
+    }
+
+    const globalGain = audioCtx.createGain();
+    globalGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+    globalGain.connect(audioCtx.destination);
+
+    let waveform = 'sine'
+
+    window.addEventListener('keydown', keyDown, false);
+    window.addEventListener('keyup', keyUp, false);
+
+    activeOscillators = {}
 
     const waveformControl = document.getElementById('waveform')
     waveformControl.addEventListener('change', function(event) {
         waveform = event.target.value
     })
 
-    window.addEventListener('keydown', keyDown, false);
-    window.addEventListener('keyup', keyUp, false);
+    function updatedisplay() {
+        const notes = [...new Set(Object.keys(activeOscillators).map(k => notenames[k]))];
+        document.getElementById('note').textContent = notes.join(' ');
 
-    const activeOsc = {}
+        if (notes.length === 0) {
+            document.body.style.backgroundColor = ''
+            return;
+        }
 
-    function majortriad(root) {
-        const rindex = letters.indexOf(root);
-        const third = letters[(rindex + 4) % 12];
-        const fifth = letters[(rindex + 7) % 12];
-        return [root, third, fifth];
-    }
+        const mixed = notes.reduce(
+            (acc, note) => {
+                const [r, g, b] = notecolors[note];
+                return [acc[0] + r, acc[1] + g, acc[2] + b];
+            },
+            [0, 0, 0]
+        ).map(v => Math.min(255, Math.round(v / notes.length)));
 
-    function updateGain() {
-        const voices = Object.values(activeOsc);
-        const vcount = voices.length;
-        if (vcount === 0) return;
-
-        const targetGain = 1/vcount;
-        const now = audioCtx.currentTime;
-
-        voices.forEach(({gain}) => {
-            gain.gain.cancelScheduledValues(now);
-            gain.gain.setTargetAtTime(targetGain, now, 0.01);
-        });
+        document.body.style.backgroundColor = `rgb(${mixed[0]}, ${mixed[1]}, ${mixed[2]})`;
     }
 
     function keyDown(event) {
         const key = (event.detail || event.which).toString();
-        if (keyboardFreqMap[key] && !activeOsc[key]) {
+        if (keyboardFrequencyMap[key] && !activeOscillators[key]) {
             playNote(key);
         }
+        updatedisplay();
     }
 
     function keyUp(event) {
         const key = (event.detail || event.which).toString();
-        if (keyboardFreqMap[key] && activeOsc[key]) {
-            const {osc, gain} = activeOsc[key];
-            const now = audioCtx.currentTime;
-
-            gain.gain.cancelScheduledValues(now);
-            gain.gain.setValueAtTime(gain.gain.value, now);
-            gain.gain.exponentialRampToValueAtTime(
-                0.0001,
-                now + adsr.release
-            );
-
-            notedisplay.textContent = '-';
-
-            osc.stop(now + adsr.release);
-            delete activeOsc[key];
-            updateGain();
+        if (keyboardFrequencyMap[key] && activeOscillators[key]) {
+            const {osc, gainnode} = activeOscillators[key];
+            if (keyboardFrequencyMap[key] && activeOscillators[key]) {
+                const {osc, gainnode} = activeOscillators[key];
+                gainnode.gain.cancelScheduledValues(audioCtx.currentTime);
+                gainnode.gain.setValueAtTime(gainnode.gain.value, audioCtx.currentTime);
+                gainnode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + adsr.release);
+                osc.stop(audioCtx.currentTime + adsr.release)
+                delete activeOscillators[key];
+            }
         }
+        updatedisplay();
     }
 
     function playNote(key) {
         const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        const now = audioCtx.currentTime;
+        const gainnode = audioCtx.createGain();
 
-        osc.frequency.setValueAtTime(keyboardFreqMap[key], now)
+        osc.frequency.setValueAtTime(keyboardFrequencyMap[key], audioCtx.currentTime)
         osc.type = waveform
+        osc.connect(gainnode)
+        gainnode.connect(globalGain)
 
-        gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.exponentialRampToValueAtTime(1, now + adsr.attack);
-        gain.gain.exponentialRampToValueAtTime(adsr.sustain, now + adsr.attack + adsr.decay);
+        gainnode.gain.setValueAtTime(0, audioCtx.currentTime)
+        gainnode.gain.linearRampToValueAtTime(1, audioCtx.currentTime + adsr.attack)
+        gainnode.gain.exponentialRampToValueAtTime(
+            adsr.sustain,
+            audioCtx.currentTime + adsr.attack + adsr.decay
+        )
         
-        osc.connect(gain);
-        gain.connect(globalGain);
         osc.start();
-        
-        notedisplay.textContent = notenamekey[key];
-        const triad = majortriad(notenamekey[key]);
-        triaddisplay.textContent = triad.join(' - ');
-
-        activeOsc[key] = {osc, gain};
-        updateGain();
+        activeOscillators[key] = {osc, gainnode}
     }
 })
