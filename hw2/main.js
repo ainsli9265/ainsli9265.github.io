@@ -262,7 +262,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
         canvasCtx.lineWidth = 2;
-        canvasCtx.strokeStyle = "rgb(255, 27, 187)";
 
         canvasCtx.beginPath();
 
