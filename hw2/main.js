@@ -1,25 +1,7 @@
 document.addEventListener("DOMContentLoaded", function(event) {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    const globalGain = audioCtx.createGain();
-    globalGain.gain.setValueAtTime(0.8, audioCtx.currentTime)
-    const globalAnalyser = audioCtx.createAnalyser();
-    globalGain.connect(globalAnalyser);
-    globalAnalyser.connect(audioCtx.destination);
-    const adsr = {
-        attack: 0.02,
-        decay: 0.1,
-        sustain: 0.6,
-        release: 0.15
-    };
-
-    let waveform = 'sine'
-    let addmode = 'off'
-    let ammode = false;
-    let fmmode = false;
-    let lfomode = false;
-
-    const keyboardFreqMap = {
+    const keyboardFrequencyMap = {
         '90': 261.625565300598634,  //Z - C
         '83': 277.182630976872096, //S - C#
         '88': 293.664767917407560,  //X - D
@@ -46,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
         '85': 987.766602512248223,  //U - B
     }
 
-    const notenamekey = {
+    const notenames = {
         '90': 'C',
         '83': 'C#',
         '88': 'D',
@@ -73,213 +55,261 @@ document.addEventListener("DOMContentLoaded", function(event) {
         '85': 'B'
     }
 
-    const partials = [[1, 1.0], [2, 0.5], [3, 0.25], [4, 0.125], [5, 0.1]];
+    const notecolors = {
+        'C': [255, 0, 0],
+        'C#': [255, 60, 0],
+        'D': [255, 120, 0],
+        'D#': [255, 180, 0],
+        'E': [255, 255, 0],
+        'F': [0, 200, 0],
+        'F#': [0, 200, 150],
+        'G': [0, 150, 255],
+        'G#': [0, 0, 255],
+        'A': [100, 0, 255],
+        'A#': [180, 0, 255],
+        'B': [255, 0, 180],
+    }
 
+    const adsr = {
+        attack: 0.08,
+        decay: 0.2,
+        sustain: 0.2,
+        release: 0.1
+    }
+
+    const partials = [
+        {mult: 1, amp: 0.5},
+        {mult: 2, amp: 0.25},
+        {mult: 3, amp: 0.15 },
+        {mult: 4, amp: 0.10},
+    ]
+
+    const globalGain = audioCtx.createGain();
+    const compressor = audioCtx.createDynamicsCompressor();
+    globalGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+    globalGain.connect(compressor);
+    compressor.connect(audioCtx.destination);
+
+    let addmode = 'off'
+    let ammode = 'off'
     let amfreq = 110;
+    let fmmode = 'off'
     let fmfreq = 110;
-    let fmindex = 100;
-
-    document.getElementById('amfreq').addEventListener('input', function(event) {
-        amfreq = parseFloat(event.target.value);
-    });
-
-    document.getElementById('fmfreq').addEventListener('input', function(event) {
-        fmfreq = parseFloat(event.target.value);
-    });
-
-    document.getElementById('fmindex').addEventListener('input', function(event) {
-        fmindex = parseFloat(event.target.value);
-    });
-
-    const notedisplay = document.getElementById('notedisplay');
-    const triaddisplay = document.getElementById('triaddisplay');
-
-    const waveformControl = document.getElementById('waveform')
-    waveformControl.addEventListener('change', function(event) {
-        waveform = event.target.value;
-    });
-
-    const additiveControl = document.getElementById('additive')
-    additiveControl.addEventListener('change', function(event) {
-        addmode = event.target.value;
-    });
-
-    const amcontrol = document.getElementById('am');
-    amcontrol.addEventListener('change', function(event) {
-        ammode = event.target.value === 'on';
-    });
-
-    const fmcontrol = document.getElementById('fm');
-    fmcontrol.addEventListener('change', function(event) {
-        fmmode = event.target.value === 'on';
-    });
-
-    const lfocontrol = document.getElementById('lfo');
-    lfocontrol.addEventListener('change', function(event) {
-        lfomode = event.target.value === 'on';
-    });
+    let lfomode = 'off';
+    let lfofreq = 5;
+    let lfodepth = 10;
 
     window.addEventListener('keydown', keyDown, false);
     window.addEventListener('keyup', keyUp, false);
 
-    const activeOsc = {}
+    activeOscillators = {}
 
-    draw();
+    const additiveControl = document.getElementById('additive');
+    additiveControl.addEventListener('change', function(event) {
+        addmode = event.target.value;
+    })
 
-    function updateGain() {
-        const voices = Object.values(activeOsc);
-        const vcount = voices.length;
-        if (vcount === 0) return;
+    const amControl = document.getElementById('am');
+    amControl.addEventListener('change', function(event) {
+        ammode = event.target.value;
+    })
 
-        const targetGain = 1/vcount;
-        const now = audioCtx.currentTime;
+    const amFrequencyControl = document.getElementById('amfreq');
+    amFrequencyControl.addEventListener('input', function(event) {
+        amfreq = parseFloat(event.target.value);
+    })
 
-        voices.forEach(({gain}) => {
-            gain.gain.cancelScheduledValues(now);
-            gain.gain.setTargetAtTime(targetGain, now, 0.01);
-        });
+    const fmControl = document.getElementById('fm');
+    fmControl.addEventListener('change', function(event) {
+        fmmode = event.target.value;
+    })
+
+    const fmFrequencyControl = document.getElementById('fmfreq');
+    fmFrequencyControl.addEventListener('input', function(event) {
+        fmfreq = parseFloat(event.target.value);
+    })
+
+    const lfoControl = document.getElementById('lfo');
+    lfoControl.addEventListener('change', e => lfomode = e.target.value);
+
+    const lfoFrequencyControl = document.getElementById('lfofreq');
+    lfoFrequencyControl.addEventListener('input', e => lfofreq = parseFloat(e.target.value));
+
+    const lfoDepthControl = document.getElementById('lfodepth');
+    lfoDepthControl.addEventListener('input', e => lfodepth = parseFloat(e.target.value));
+
+    function updatedisplay() {
+        const notes = [...new Set(Object.keys(activeOscillators).map(k => notenames[k]))];
+        document.getElementById('note').textContent = notes.join(' ');
+
+        if (notes.length === 0) {
+            document.body.style.backgroundColor = ''
+            return;
+        }
+
+        const mixed = notes.reduce(
+            (acc, note) => {
+                const [r, g, b] = notecolors[note];
+                return [acc[0] + r, acc[1] + g, acc[2] + b];
+            },
+            [0, 0, 0]
+        ).map(v => Math.min(255, Math.round(v / notes.length)));
+
+        document.body.style.backgroundColor = `rgb(${mixed[0]}, ${mixed[1]}, ${mixed[2]})`;
     }
 
     function keyDown(event) {
         const key = (event.detail || event.which).toString();
-        if (keyboardFreqMap[key] && !activeOsc[key]) {
+        if (keyboardFrequencyMap[key] && !activeOscillators[key]) {
             playNote(key);
         }
+        updatedisplay();
     }
 
     function keyUp(event) {
         const key = (event.detail || event.which).toString();
-        if (keyboardFreqMap[key] && activeOsc[key]) {
-            const {oscs, gain} = activeOsc[key];
-            const now = audioCtx.currentTime;
-
-            gain.gain.cancelScheduledValues(now);
-            gain.gain.setValueAtTime(gain.gain.value, now);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + adsr.release);
-
-            notedisplay.textContent = '-';
-
-            oscs.forEach(osc => osc.stop(now + adsr.release));
-            setTimeout(() => gain.disconnect(), (adsr.release + 0.1)*1000);
-            delete activeOsc[key];
-            updateGain();
+        if (keyboardFrequencyMap[key] && activeOscillators[key]) {
+            const {oscillators, gainnode} = activeOscillators[key];
+            gainnode.gain.cancelScheduledValues(audioCtx.currentTime);
+            gainnode.gain.setValueAtTime(gainnode.gain.value, audioCtx.currentTime);
+            gainnode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + adsr.release);
+            oscillators.forEach(osc => osc.stop(audioCtx.currentTime + adsr.release));
+            delete activeOscillators[key];
         }
+        updatedisplay();
     }
 
     function playNote(key) {
-        const now = audioCtx.currentTime;
-        const basefreq = keyboardFreqMap[key]
-        const envgain = audioCtx.createGain();
+        const gainnode = audioCtx.createGain();
+        gainnode.connect(globalGain);
+        gainnode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainnode.gain.linearRampToValueAtTime(1, audioCtx.currentTime + adsr.attack);
+        gainnode.gain.exponentialRampToValueAtTime(
+            adsr.sustain,
+            audioCtx.currentTime + adsr.attack + adsr.decay
+        );
 
-        envgain.gain.setValueAtTime(0.0001, now);
-        envgain.gain.exponentialRampToValueAtTime(1, now + adsr.attack);
-        envgain.gain.exponentialRampToValueAtTime(adsr.sustain, now + adsr.attack + adsr.decay);
+        const gaincarrier = audioCtx.createGain();
+        gaincarrier.connect(gainnode);
 
-        envgain.connect(globalGain);
-
-        let oscs;
+        const oscillators = [];
 
         if (addmode === 'on') {
-            oscs = partials.map(([mult, amp]) => {
+            partials.forEach(p => {
                 const osc = audioCtx.createOscillator();
-                const partgain = audioCtx.createGain();
-                osc.frequency.setValueAtTime(basefreq*mult, now);
-                osc.type = waveform;
-                partgain.gain.setValueAtTime(amp, now);
-                osc.connect(partgain);
-                partgain.connect(envgain);
+                const partialGain = audioCtx.createGain();
+
+                osc.frequency.setValueAtTime(keyboardFrequencyMap[key] * p.mult, audioCtx.currentTime);
+                osc.type = 'sine';
+                partialGain.gain.setValueAtTime(p.amp, audioCtx.currentTime);
+
+                osc.connect(partialGain);
+                partialGain.connect(gaincarrier);
                 osc.start();
-                return osc;
+                oscillators.push(osc);
             });
         } else {
             const osc = audioCtx.createOscillator();
-            osc.frequency.setValueAtTime(basefreq, now);
-            osc.type = waveform;
-            osc.connect(envgain);
+            osc.frequency.setValueAtTime(keyboardFrequencyMap[key], audioCtx.currentTime);
+            osc.type = 'sine';
+            osc.connect(gaincarrier);
             osc.start();
-            oscs = [osc];
-
-            if (lfomode) {
-                const lfo = audioCtx.createOscillator();
-                const lfogain = audioCtx.createGain();
-                lfo.frequency.setValueAtTime(5, now);
-                lfo.type = waveform;
-                lfogain.gain.setValueAtTime(8, now);
-                lfo.connect(lfogain);
-                lfogain.connect(osc.frequency);
-                lfo.start();
-                oscs.push(lfo);
-            }
+            oscillators.push(osc);
         }
 
-        if (ammode) {
-            const modulator = audioCtx.createOscillator();
-            const modgain = audioCtx.createGain();
-            modulator.frequency.setValueAtTime(amfreq, now);
-            modulator.type = waveform;
-            modgain.gain.setValueAtTime(1, now);
-            modulator.connect(modgain);
-            modgain.connect(envgain.gain);
-            modulator.start();
-            oscs.push(modulator);
-        }
+        if (ammode === 'on') {
+            const depth = audioCtx.createGain();
+            depth.gain.value = 0.5;
+            gaincarrier.gain.value = 1 - depth.gain.value;
 
-        if (fmmode) {
             const modulator = audioCtx.createOscillator();
-            const modgain = audioCtx.createGain();
-            modulator.frequency.setValueAtTime(fmfreq, now);
+            modulator.frequency.setValueAtTime(amfreq, audioCtx.currentTime);
             modulator.type = 'sine';
-            modgain.gain.setValueAtTime(fmindex, now);
-            modulator.connect(modgain);
 
-            if (addmode === 'on') {
-                oscs.forEach(osc => modgain.connect(osc.frequency));
-            } else {
-                modgain.connect(oscs[0].frequency);
-            }
-
+            modulator.connect(depth);
+            depth.connect(gaincarrier.gain);
             modulator.start();
-            oscs.push(modulator);
+            oscillators.push(modulator);
+        } else {
+            gaincarrier.gain.value = 1;
         }
 
-        notedisplay.textContent = notenamekey[key];
+        if (fmmode === 'on') {
+            const depth = audioCtx.createGain();
+            depth.gain.value = 100;
 
-        activeOsc[key] = {oscs, gain:envgain};
-        updateGain();
+            const modulator = audioCtx.createOscillator();
+            modulator.frequency.setValueAtTime(fmfreq, audioCtx.currentTime);
+            modulator.type = 'sine';
+
+            modulator.connect(depth);
+            
+            oscillators.forEach(osc => {
+                if (osc.frequency) {
+                    depth.connect(osc.frequency);
+                }
+            });
+
+            modulator.start();
+            oscillators.push(modulator);
+        }
+
+        if (lfomode === 'on') {
+            const lfo = audioCtx.createOscillator();
+            const lfogain = audioCtx.createGain();
+
+            lfo.frequency.setValueAtTime(lfofreq, audioCtx.currentTime);
+            lfo.type = 'sine';
+            lfogain.gain.value = lfodepth;
+
+            lfo.connect(lfogain);
+
+            oscillators.forEach(osc => {
+                if (osc.frequency) {
+                    lfogain.connect(osc.frequency);
+                }
+            });
+
+            lfo.start();
+            oscillators.push(lfo);
+        }
+
+        activeOscillators[key] = {oscillators, gainnode};
     }
+
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    globalGain.connect(compressor);
+    compressor.connect(analyser);
+    analyser.connect(audioCtx.destination);
+
+    const canvas = document.querySelector("#wavevisualizer");
+    const canvasCtx = canvas.getContext("2d");
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
 
     function draw() {
         requestAnimationFrame(draw);
-        globalAnalyser.fftSize = 2048;
-        var bufferlength = globalAnalyser.frequencyBinCount;
-        var dataArray = new Uint8Array(bufferlength);
-        globalAnalyser.getByteTimeDomainData(dataArray);
-        
-        var canvas = document.querySelector("#globalVisualizer");
-        var canvasCtx = canvas.getContext("2d");
+        analyser.getByteTimeDomainData(dataArray);
 
         canvasCtx.fillStyle = "white";
         canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-
         canvasCtx.lineWidth = 2;
-
         canvasCtx.beginPath();
 
-        var sliceWidth = canvas.width*1.0/bufferlength;
-        var x = 0;
+        const sliceWidth = canvas.width / bufferLength;
+        let x = 0;
 
-        for (var i = 0; i < bufferlength; i++) {
-            var v = dataArray[i]/128.0;
-            var y = v*canvas.height/2;
-            if (i === 0) {
-                canvasCtx.moveTo(x, y);
-            } else {
-                canvasCtx.lineTo(x, y);
-            }
+        for (let i = 0; i < bufferLength; i++) {
+            const v = dataArray[i] / 128.0;
+            const y = v * canvas.height / 2;
+            i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y);
             x += sliceWidth;
         }
 
-        canvasCtx.lineTo(canvas.width, canvas.height/2);
+        canvasCtx.lineTo(canvas.width, canvas.height / 2);
         canvasCtx.stroke();
     }
+
+    draw();
 })
