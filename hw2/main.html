@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title> hw 2 </title>
+        <title>as6839 hw 1</title>
         <style>
             body {
                 display: flex;
@@ -17,21 +17,18 @@
                 font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
                 font-size: 2rem;
             }
+            #note {
+                font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+                font-size: 2rem;
+            }
             select {
-                font-size:  1.5rem;
+                font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+                font-size: 1.5rem;
             }
         </style>
     </head>
-    
-    <body>
-        <div>
-            <span class="label">waveform: </span>
-            <select id="waveform">
-                <option value="sine" selected="selected">sine</option>
-                <option value="sawtooth">sawtooth</option>
-            </select>
-        </div>
 
+    <body>
         <div>
             <span class="label">additive synthesis: </span>
             <select id="additive">
@@ -41,45 +38,51 @@
         </div>
 
         <div>
-            <span class="label">am synthesis: </span>
+            <span class="label">AM synthesis: </span>
             <select id="am">
                 <option value="off" selected="selected">off</option>
                 <option value="on">on</option>
             </select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span class="label">am frequency:</span>
+
+            <span class="label">AM frequency: </span>
             <input type="range" id="amfreq" min="1" max="500" step="1" value="110">
         </div>
 
         <div>
-            <span class="label">fm synthesis: </span>
+            <span class="label">FM synthesis: </span>
             <select id="fm">
                 <option value="off" selected="selected">off</option>
                 <option value="on">on</option>
             </select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span class="label">fm frequency:</span>
-            <input type="range" id="fmfreq" min="1" max="500" step="1" value="110">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span class="label">fm modulation index:</span>
-            <input type="range" id="fmindex" min="1" max="500" step="1" value="100">
+
+            <span class="label">FM frequency: </span>
+            <input type="range" id="fmfreq" min="1" max="500" step="1" value="110">
         </div>
-    
+
         <div>
-            <span class="label">lfo (doesn't work with additive synthesis): </span>
+            <span class="label">LFO: </span>
             <select id="lfo">
                 <option value="off" selected="selected">off</option>
                 <option value="on">on</option>
-            </select>
+            </select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+            <span class="label">LFO frequency: </span>
+            <input type="range" id="lfofreq" min="1" max="20" step="0.1" value="5">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+            <span class="label">LFO depth: </span>
+            <input type="range" id="lfodepth" min="0" max="50" step="1" value="10">
         </div>
 
         <div>
-            <span class="label">current note:</span>
-            <span id="notedisplay">-</span>
+            <span class="label">current note(s):</span>
+            <span id="note">-</span>
         </div>
 
         <div class="container">
-            <canvas id="globalVisualizer" width="150" height="85" style="border:2px solid">
+            <canvas id="wavevisualizer" width="200" height="85" style="border:2px solid">
                 wave form visualizer
             </canvas>
         </div>
     </body>
-    <script src="main.js"> </script>
+    <script src="hw2again.js"> </script>
 </html>
