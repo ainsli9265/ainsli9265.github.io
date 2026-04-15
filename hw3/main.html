@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>as6839 hw 3</title>
+        <style>
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                gap: 1rem;
+            }
+            .label {
+                font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+                font-size: 2rem;
+            }
+            button {
+                font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+                font-size: 2rem;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div>
+            <span class="label">part 1 (babbling brook):</span>
+            <button id="button1">start/stop</button>
+        </div>
+
+        <div class="container">
+            <canvas id="wavevisualizer" width="200" height="85" style="border:2px solid">
+                wave form visualizer
+            </canvas>
+        </div>
+
+        <div>
+            <span class="label">part 2 (making popcorn):</span>
+            <button id="button2">start/stop</button>
+        </div>
+
+        <div class="container">
+            <canvas id="wavevisualizer2" width="200" height="85" style="border:2px solid">
+                wave form visualizer
+            </canvas>
+        </div>
+
+        <div class="container">
+            Honestly I was aiming to recreate the crackling fire sound from the book,
+            but it ended up sounding more like popcorn so I leaned into that. The program
+            has a base sound of a brown noise loop made using the code provided in the
+            assignment. I thought it sounded less sharp and bright than white noise. The audio
+            switches between this state and the crackle state. There is a white noise buffer
+            that is used only for randomization and doesn't actually produce audio. Using white
+            noise with a lowpass filter and watching the signal for when it crosses a specific
+            value to generate random timings was mentioned in the book. There is also a function
+            env() to create a short amplitude envelope using setValueCurveAtTime that shapes
+            the crackles. The peak amplitude is randomized per event so some are more faint
+            and some are more sharp. The duration is also randomized. Each crackle also gets
+            a bandpass filter with a center frequency and resonance that are randomized per event. 
+        </div>
+    </body>
+    <script src="main.js"> </script>
+</html>
