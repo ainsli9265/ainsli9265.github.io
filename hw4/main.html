@@ -79,6 +79,7 @@
             p {
                 font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
                 text-indent: 3ch;
+                margin: 8px;
             }
         </style>
     </head>
@@ -138,6 +139,8 @@
             <p>
                 Since its possible for many notes to play at once, I struggled a little bit with clipping and getting the audio to sound nice.
                 I ended up passing all nodes through a compressor before the audio destination, which helps even out the volume difference between 1 or 2 notes playing vs 80.
+                It was also interesting to allow the user to choose between multiple rulesets.
+                I had to find a way to extract the relevant numbers from a selection id, which is why I made a parserule() function to change the text into arrays of neighbor numbers.
             </p>
         </div>
     </body>
