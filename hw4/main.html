@@ -122,16 +122,22 @@
 
         <div class="container">
             <p>
-                For this lab I implemented an interactive cellular automata that turns changes in a 10x10 grid into sound.
+                For this lab I implemented an interactive cellular automata (like Conway's Game of Life) that turns changes in a 10x10 grid into sound.
                 Each cell of the grid can be alive or dead, with the color indicating the cell age.
+                Each column of the grid is assigned a different musical pitch and certain rows are assigned to different octave multipliers,
+                so a cell's position determines the frequency of the note its sine wave oscillator plays.
                 The automata evolves over time according to the selected birth and survival rules.
             </p>
 
             <p>
-                Each column of the grid is assigned a musical pitch and different rows are assigned to different octaves,
-                so a cell's position determines the frequency of the note its sine wave oscillator plays.
                 The rules are described by how many neighbors a dead cell needs to come alive, and how many neighbors an alive cell needs to survive.
-                For example, the rule "born 3,6 / survive 2,3" means 
+                For example, the rule "born 3,6 / survive 2,3" means a dead cell needs to have either 3 or 6 alive neighbors to come alive in the next cycle,
+                and an alive cell needs either 2 or 3 alive neighbors to stay alive.
+            </p>
+
+            <p>
+                Since its possible for many notes to play at once, I struggled a little bit with clipping and getting the audio to sound nice.
+                I ended up passing all nodes through a compressor before the audio destination, which helps even out the volume difference between 1 or 2 notes playing vs 80.
             </p>
         </div>
     </body>
