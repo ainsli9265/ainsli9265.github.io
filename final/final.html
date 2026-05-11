@@ -64,6 +64,38 @@
         </div>
 
         <div id="error" style="color: red;"></div>
+
+        <div class="container">
+            <p>
+                For this project I implemented a simple, command-based live coding engine in the browser using WebAudioAPI.
+                It allows the user to type short musical commands into a text box, where each line represents an independent track of notes.
+                The input language supports many different notes over multiple octaves, and allows for octave changes in the middle of tracks as well as rhythmic modifiers that lengthen/shorten notes.
+            </p>
+
+            <p>
+                When the user presses the start button, the program parses the text input into structured note data containing pitch and length information.
+                This data is stored in liveCodeState, which is used by the audio engine and the visualizer.
+                Each line of code entered by the user is assigned its own oscillator and gain node, allowing multiple lines of notes to play simultaneously.
+                Repeatedly starting and stopping oscillators was causing timing differences or audio clicks.
+                Instead of creating and destroying oscillators for every note, the program keeps oscillators running continuously and uses gain nodes to control when notes are heard.
+                I also decided to go with a triangle waveform because it sounded the best when multiple notes play together and allows the user to hear note changes very clearly.
+                The audio output also passes through a dynamics compressor before reaching the speakers, which helps control sudden peaks in volume when multiple notes overlap.
+            </p>
+
+            <p>
+                The program also uses audioCtx.currentTime to schedule notes slightly ahead of playback time.
+                The scheduler calculates how long each loop lasts, tracks the start of the next loop, and keeps rescheduling upcoming notes.
+            </p>
+
+            <p>
+                The visualizer is rendered using the HTML canvas API.
+                Every note stored in liveCodeState is drawn as a colored block on a scrolling timeline, with vertical position representing pitch and horizontal width representing duration.
+                Each track is assigned a different color so users can visually distinguish them.
+                The canvas scrolls relative to the audio playback position, and a stationary playhead shows where in the loop the system is.
+                I really liked the pianoroll function in strudel, and wanted to implement it in my own language.
+                This way users can both hear and see the structure of the music.
+            </p>
+        </div>
     </body>
     <script src="final.js"> </script>
 </html>
