@@ -45,6 +45,7 @@
         <p>
             This live coding engine allows you to specify a melody by entering a space-separated list of notes (A-G#) and rests (_) with stackable length indicators.
             The octave is set to a default of 4, but can be changed with oct commands.
+            Strings of notes/rests can be repeated by wrapping them in parenthesis and adding an x followed by a number.
             An "oct3", "oct4", or "oct5" changes the octave of all the notes following this indicator.
             A "-" after a note or rest indicates cutting its length in half (eighth note).
             A "+" after a note or rest indicates doubling its length (half note).
@@ -55,7 +56,7 @@
         <p>
             example: <br>
             G. C F+ A# D- A D# <br>
-            oct3 G- A- A#. C- D-- D#- F- G- G- A-- A#- C-- D- D#-- F- G- <br>
+            oct3 G- A- A#. C- D-- D#- F- (G-)x2 A-- A#- C-- D- D#-- F- G- <br>
             oct5 a# c d d# f oct4 a a# g
         </p>
 
@@ -73,7 +74,7 @@
             <p>
                 For this project I implemented a simple, command-based live coding engine in the browser using WebAudioAPI.
                 It allows the user to type short musical commands into a text box, where each line represents an independent track of notes.
-                The input language supports many different notes over multiple octaves, and allows for octave changes in the middle of tracks as well as rhythmic modifiers that lengthen/shorten notes.
+                The input language allows for varying notes, octave changes in the middle of tracks, rhythmic modifiers that lengthen/shorten notes, and repeating patterns.
             </p>
 
             <p>
