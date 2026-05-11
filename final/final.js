@@ -203,6 +203,17 @@ function parseLength(mods) {
 
 //interpret user input
 function parseCode(code) {
+    //expand repeat groups before parsing
+    function expandRepeats(str) {
+        while (/\([^()]*\)x\d+/i.test(str)) {
+            str = str.replace(/\(([^()]*)\)x(\d+)/gi, (_, group, n) => {
+                return Array(parseInt(n)).fill(group.trim()).join(' ');
+            });
+        }
+        return str;
+    }
+    code = expandRepeats(code);
+
     //split input by spaces
     let symbols = code.trim().split(/\s+/);
     let rnoct = 4;
@@ -328,7 +339,7 @@ function drawPianoRoll() {
     let scrollOffset = 0;
     let loopSpan = 0;
     const playheadX = keyWidth + (w - keyWidth) * 0.25;
-    
+
     //draw notes for each track
     liveCodeState.forEach(track => {
         const span = track.reduce((s, n) => s + n.length / 10, 0);
